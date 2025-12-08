@@ -1,8 +1,6 @@
 <?php
-// В САМОМ НАЧАЛЕ файла
-session_start();
-
 require_once 'config.php';
+session_start();
 require_once 'db_connect.php';
 
 // Проверяем авторизацию

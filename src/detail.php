@@ -1,9 +1,9 @@
 <?php
-// Начинаем сессию и подключаем БД
 require_once 'config.php';
+session_start();
 require_once 'db_connect.php';
 
-// Проверяем авторизацию
+// Проверяем авторизацию (ТОЧНО ТАК ЖЕ как в index.php)
 $is_logged_in = isset($_SESSION['user_id']);
 $user_name = $_SESSION['user_name'] ?? '';
 $current_user_id = $_SESSION['user_id'] ?? null;
@@ -88,13 +88,14 @@ try {
                         <img src="images/logo.svg" alt="Логотип" class="logo-image">
                     </a>
                 </div>
+                <!-- ТАК ЖЕ как в index.php -->
                 <div class="auth-buttons">
                     <?php if ($is_logged_in): ?>
                         <span class="user-welcome">Здравствуйте, <?= htmlspecialchars($user_name) ?></span>
                         <a href="logout.php" class="auth-btn logout-btn">Выход</a>
                     <?php else: ?>
-                        <button class="auth-btn" data-tab="register">Регистрация</button>
-                        <button class="auth-btn" data-tab="login">Вход</button>
+                        <button class="auth-btn" onclick="openModal('register')">Регистрация</button>
+                        <button class="auth-btn" onclick="openModal('login')">Вход</button>
                     <?php endif; ?>
                 </div>
             </div>
@@ -211,15 +212,243 @@ try {
         </div>
     </footer>
 
-    <script>
-        function handleResponse(adId) {
-            <?php if (!$is_logged_in): ?>
-                alert('Для отклика необходимо войти в систему');
-                // Здесь нужно открыть модальное окно
-                // openModal('login');
-                return;
-            <?php endif; ?>
+    <!-- Модальное окно авторизации (ТОЧНО ТАКОЕ ЖЕ как в index.php) -->
+    <div class="modal-overlay" id="authModal" style="display: none;">
+        <div class="modal-backdrop" onclick="closeModal()"></div>
+        <div class="modal">
+            <div class="modal-content">
+                <div class="auth-tabs">
+                    <button class="auth-tab" id="registerTabBtn" onclick="switchTab('register')">Регистрация</button>
+                    <button class="auth-tab" id="loginTabBtn" onclick="switchTab('login')">Авторизация</button>
+                </div>
 
+                <!-- Форма регистрации -->
+                <div class="auth-form-container register-form" id="registerForm">
+                    <form class="auth-form" id="registerFormElement" onsubmit="handleRegister(event)">
+                        <div class="form-row">
+                            <input type="text" placeholder="Ваше имя" required class="form-input" id="regName">
+                        </div>
+                        <div class="form-row form-two-columns">
+                            <input type="email" placeholder="Email" required class="form-input" id="regEmail">
+                            <input type="tel" placeholder="Мобильный телефон" required class="form-input" id="regPhone">
+                        </div>
+                        <div class="form-row form-two-columns">
+                            <input type="password" placeholder="Пароль" required class="form-input" id="regPassword">
+                            <input type="password" placeholder="Повторите пароль" required class="form-input" id="regConfirmPassword">
+                        </div>
+
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="agree" required class="checkbox-input">
+                            <label for="agree" class="checkbox-label">
+                                Согласен на обработку персональных данных
+                            </label>
+                        </div>
+
+                        <button type="submit" class="submit-btn">Зарегистрироваться</button>
+                    </form>
+
+                    <div class="form-footer">
+                        <p>Все поля обязательны для заполнения</p>
+                    </div>
+                </div>
+
+                <!-- Форма авторизации -->
+                <div class="auth-form-container login-form" id="loginForm" style="display: none;">
+                    <form class="auth-form" id="loginFormElement" onsubmit="handleLogin(event)">
+                        <div class="form-row">
+                            <input type="email" placeholder="Email" required class="form-input" id="loginEmail">
+                        </div>
+                        <div class="form-row">
+                            <input type="password" placeholder="Пароль" required class="form-input" id="loginPassword">
+                        </div>
+
+                        <button type="submit" class="submit-btn">Войти</button>
+                    </form>
+
+                    <div class="form-footer">
+                        <p>Все поля обязательны для заполнения</p>
+                    </div>
+                </div>
+
+                <button class="close-btn" onclick="closeModal()">×</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // === ГЛОБАЛЬНЫЕ ФУНКЦИИ (те же что и в index.php) ===
+        
+        function openModal(tab = 'register') {
+            const modal = document.getElementById('authModal');
+            if (!modal) return;
+            
+            modal.style.display = 'flex';
+            document.body.style.overflow = 'hidden';
+            switchTab(tab);
+        }
+
+        function closeModal() {
+            const modal = document.getElementById('authModal');
+            if (!modal) return;
+            
+            modal.style.display = 'none';
+            document.body.style.overflow = '';
+        }
+
+        function switchTab(tab) {
+            const registerForm = document.getElementById('registerForm');
+            const loginForm = document.getElementById('loginForm');
+            const registerTabBtn = document.getElementById('registerTabBtn');
+            const loginTabBtn = document.getElementById('loginTabBtn');
+
+            if (!registerForm || !loginForm) return;
+
+            if (tab === 'register') {
+                registerForm.style.display = 'block';
+                loginForm.style.display = 'none';
+                if (registerTabBtn) registerTabBtn.classList.add('active');
+                if (loginTabBtn) loginTabBtn.classList.remove('active');
+            } else {
+                registerForm.style.display = 'none';
+                loginForm.style.display = 'block';
+                if (loginTabBtn) loginTabBtn.classList.add('active');
+                if (registerTabBtn) registerTabBtn.classList.remove('active');
+            }
+        }
+
+        // === ОБРАБОТКА РЕГИСТРАЦИИ ===
+        function handleRegister(event) {
+            event.preventDefault();
+
+            const name = document.getElementById('regName')?.value.trim();
+            const email = document.getElementById('regEmail')?.value.trim();
+            const phone = document.getElementById('regPhone')?.value.trim();
+            const password = document.getElementById('regPassword')?.value;
+            const confirmPassword = document.getElementById('regConfirmPassword')?.value;
+            const agree = document.getElementById('agree')?.checked;
+
+            // Валидация на клиенте
+            if (!name || !email || !phone || !password || !confirmPassword) {
+                alert('Все поля обязательны для заполнения');
+                return;
+            }
+
+            if (password !== confirmPassword) {
+                alert('Пароли не совпадают');
+                return;
+            }
+
+            if (password.length < 6) {
+                alert('Пароль должен быть не менее 6 символов');
+                return;
+            }
+
+            if (!agree) {
+                alert('Необходимо согласие на обработку персональных данных');
+                return;
+            }
+
+            // Отправка данных на сервер
+            const formData = new FormData();
+            formData.append('name', name);
+            formData.append('email', email);
+            formData.append('phone', phone);
+            formData.append('password', password);
+            formData.append('confirm_password', confirmPassword);
+
+            fetch('/register.php', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log('Ответ регистрации:', data);
+                
+                if (data.success) {
+                    alert('Регистрация успешна!');
+                    closeModal();
+                    location.reload(); // Перезагружаем страницу
+                } else {
+                    if (data.errors) {
+                        let errorMessage = 'Ошибки:\n';
+                        for (let field in data.errors) {
+                            errorMessage += `• ${data.errors[field]}\n`;
+                        }
+                        alert(errorMessage);
+                    } else {
+                        alert(data.message || 'Ошибка регистрации');
+                    }
+                }
+            })
+            .catch(error => {
+                console.error('Ошибка регистрации:', error);
+                alert('Произошла ошибка при регистрации');
+            });
+        }
+
+        // === ОБРАБОТКА АВТОРИЗАЦИИ ===
+        function handleLogin(event) {
+            event.preventDefault();
+
+            const email = document.getElementById('loginEmail')?.value.trim();
+            const password = document.getElementById('loginPassword')?.value;
+
+            if (!email || !password) {
+                alert('Все поля обязательны для заполнения');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('email', email);
+            formData.append('password', password);
+
+            fetch('/auth.php', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log('Ответ авторизации:', data);
+                
+                if (data.success) {
+                    alert('Вход выполнен успешно!');
+                    closeModal();
+                    location.reload(); // Перезагружаем страницу
+                } else {
+                    if (data.errors) {
+                        let errorMessage = 'Ошибки:\n';
+                        for (let field in data.errors) {
+                            errorMessage += `• ${data.errors[field]}\n`;
+                        }
+                        alert(errorMessage);
+                    } else {
+                        alert(data.message || 'Ошибка авторизации');
+                    }
+                }
+            })
+            .catch(error => {
+                console.error('Ошибка авторизации:', error);
+                alert('Произошла ошибка при входе');
+            });
+        }
+
+        // === ОБРАБОТКА ОТКЛИКА ===
+        function handleResponse(adId) {
+            // Динамическая проверка авторизации через PHP сессию
+            // Если пользователь авторизовался через модальное окно, нужно обновить страницу
+            <?php if (!$is_logged_in): ?>
+                // Пользователь не авторизован при загрузке страницы
+                alert('Для отклика необходимо войти в систему');
+                openModal('login');
+                return;
+            <?php else: ?>
+                // Пользователь авторизован - выполняем отклик
+                performResponse(adId);
+            <?php endif; ?>
+        }
+
+        // Новая функция для выполнения отклика
+        function performResponse(adId) {
             if (!confirm('Вы уверены, что хотите откликнуться на это объявление?')) {
                 return;
             }
@@ -248,7 +477,13 @@ try {
                 } else {
                     button.disabled = false;
                     button.innerHTML = 'Откликнуться на объявление';
-                    alert(data.message || 'Ошибка при отклике');
+                    
+                    if (data.message === 'Требуется авторизация') {
+                        alert('Сессия истекла. Пожалуйста, войдите снова.');
+                        openModal('login');
+                    } else {
+                        alert(data.message || 'Ошибка при отклике');
+                    }
                 }
             })
             .catch(error => {

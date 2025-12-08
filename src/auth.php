@@ -1,11 +1,8 @@
 <?php
-// ВСЕГДА в самом начале файла
+require_once 'config.php';
 session_start();
-
-header('Content-Type: application/json');
-
 require_once 'db_connect.php';
-
+header('Content-Type: application/json');
 $response = [
     'success' => false,
     'message' => '',

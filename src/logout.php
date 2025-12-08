@@ -1,6 +1,7 @@
 <?php
+require_once 'config.php';
 session_start();
-
+require_once 'db_connect.php';
 // Уничтожаем все данные сессии
 $_SESSION = [];
 
