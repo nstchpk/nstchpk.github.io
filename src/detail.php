@@ -31,7 +31,32 @@ try {
     $stmt->execute([':id' => $id]);
     $ad = $stmt->fetch();
 
+    $role_id = $_SESSION['role_id'] ?? null;
+
+    $can_edit = false;
+
+    if ($role_id === 1) {
+        // Админ может всё
+        $can_edit = true;
+    } elseif ($is_logged_in && $ad['user_id'] == $_SESSION['user_id']) {
+        // Автор может редактировать СВОЁ объявление
+        $can_edit = true;
+    }
+
+
     if (!$ad) {
+        header("Location: index.php");
+        exit();
+    }
+
+    // Ограничение доступа к непроверенным объявлениям
+    if (
+        $ad['is_verified'] == 0 &&
+        (
+            !$is_logged_in ||
+            ($current_user_id != $ad['user_id'] && ($_SESSION['role_id'] ?? null) != 1)
+        )
+    ) {
         header("Location: index.php");
         exit();
     }
@@ -84,8 +109,9 @@ try {
         <div class="container">
             <div class="header-top">
                 <div class="logo">
-                    <a href="index.php">
-                        <img src="images/logo.svg" alt="Логотип" class="logo-image">
+                    <a class="logo-link" href="index.php">
+                        <img src="images/logoo.svg" alt="Логотип сайта" class="logo-image">
+                        <span class="logo-text">Объявления</span>
                     </a>
                 </div>
                 <!-- ТАК ЖЕ как в index.php -->
@@ -151,15 +177,18 @@ try {
 
                 <!-- Правая колонка -->
                 <div class="detail-info-column">
-                    <div class="detail-top-block">
-                        <div class="price-block">
-                            <div class="ad-price-detail">
-                                <?= number_format($ad['ads_price'], 0, '', ' ') ?> ₽
-                            </div>
-                            <a href="index.php" class="back-to-list-link">
-                                ← Назад к списку
+                    <div class="detail-top">
+                        <a href="index.php" class="back-link">← Назад к списку</a>
+
+                        <?php if ($can_edit): ?>
+                            <a href="edit_ad.php?id=<?= $ad['ads_id'] ?>" class="edit-link">
+                                Редактировать
                             </a>
-                        </div>
+                        <?php endif; ?>
+                    </div>
+
+                    <div class="ad-price-detail">
+                        <?= number_format($ad['ads_price'], 0, '', ' ') ?> ₽
                     </div>
 
                     <h1 class="ad-title-detail">
@@ -192,12 +221,11 @@ try {
                         <?php endif; ?>
                     </button>
 
-                    <div class="description-block">
-                        <h2 class="block-title">Описание</h2>
-                        <div class="description-text">
-                            <?= nl2br(htmlspecialchars($ad['ads_description'] ?? '')) ?>
-                        </div>
+                    <div class="description-card">
+                        <h3>Описание</h3>
+                        <p><?= nl2br(htmlspecialchars($ad['ads_description'] ?? '')) ?></p>
                     </div>
+
                 </div>
             </div>
         </div>

@@ -8,20 +8,41 @@ $is_logged_in = isset($_SESSION['user_id']);
 $user_name = $_SESSION['user_name'] ?? '';
 $user_id = $_SESSION['user_id'] ?? null;
 
-// Получаем все объявления
+// Получаем объявления с учетом ролей и модерации
+$role_id = $_SESSION['role_id'] ?? null;
+
 try {
-    $sql = "SELECT * FROM ads ORDER BY created_at DESC LIMIT 15";
+    if ($role_id === 1) {
+        // АДМИН: видит все объявления
+        $sql = "
+            SELECT * FROM ads
+            ORDER BY is_verified ASC, created_at DESC
+            LIMIT 15
+        ";
+    } else {
+        // ГОСТИ И ПОЛЬЗОВАТЕЛИ: только проверенные
+        $sql = "
+            SELECT * FROM ads
+            WHERE is_verified = 1
+            ORDER BY created_at DESC
+            LIMIT 15
+        ";
+    }
+
     $stmt = $pdo->prepare($sql);
     $stmt->execute();
     $ads = $stmt->fetchAll();
+
 } catch (PDOException $e) {
     $ads = [];
     error_log("Ошибка БД: " . $e->getMessage());
 }
+
 ?>
 
 <!DOCTYPE html>
 <html lang="ru">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -31,18 +52,24 @@ try {
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 </head>
+
 <body>
     <header class="header">
         <div class="container">
             <div class="header-top">
                 <div class="logo">
-                    <img src="images/logo.svg" alt="Логотип" class="logo-image">
+                    <img src="images/logoo.svg" alt="Логотип сайта" class="logo-image">
+                    <span class="logo-text">Объявления</span>
                 </div>
-                
+
                 <div class="auth-buttons">
                     <?php if ($is_logged_in): ?>
                         <span class="user-welcome">Здравствуйте, <?= htmlspecialchars($user_name) ?></span>
                         <a href="logout.php" class="auth-btn logout-btn">Выход</a>
+                        <?php if (($role_id ?? null) === 1): ?>
+                            <a href="admin.php" class="auth-btn">Админ-панель</a>
+                        <?php endif; ?>
+
                     <?php else: ?>
                         <button class="auth-btn" data-tab="register">Регистрация</button>
                         <button class="auth-btn" data-tab="login">Вход</button>
@@ -68,13 +95,23 @@ try {
                         <div class="ad-card">
                             <div class="ad-img">
                                 <a href="detail.php?id=<?= $ad['ads_id'] ?>">
-                                    <img src="images/<?= htmlspecialchars($ad['ads_photo']) ?>" 
-                                         alt="<?= htmlspecialchars($ad['ads_title']) ?>" 
-                                         class="ad-image">
+                                    <img src="images/<?= htmlspecialchars($ad['ads_photo']) ?>"
+                                        alt="<?= htmlspecialchars($ad['ads_title']) ?>" class="ad-image">
                                 </a>
                             </div>
                             <div class="ad-price"><?= number_format($ad['ads_price'], 0, '', ' ') ?> ₽</div>
-                            <div class="ad-title"><?= htmlspecialchars($ad['ads_title']) ?></div>
+                            <div class="ad-title">
+                                <?= htmlspecialchars($ad['ads_title']) ?>
+
+                                <?php if (($role_id ?? null) === 1): ?>
+                                    <?php if ((int) $ad['is_verified'] === 0): ?>
+                                        <span class="ad-status pending">🕒 На модерации</span>
+                                    <?php else: ?>
+                                        <span class="ad-status approved">✅ Одобрено</span>
+                                    <?php endif; ?>
+                                <?php endif; ?>
+                            </div>
+
                         </div>
                     <?php endforeach; ?>
                 <?php else: ?>
@@ -126,7 +163,8 @@ try {
                         </div>
                         <div class="form-row form-two-columns">
                             <input type="password" placeholder="Пароль" required class="form-input" id="regPassword">
-                            <input type="password" placeholder="Повторите пароль" required class="form-input" id="regConfirmPassword">
+                            <input type="password" placeholder="Повторите пароль" required class="form-input"
+                                id="regConfirmPassword">
                         </div>
 
                         <div class="checkbox-group">
@@ -172,7 +210,7 @@ try {
         function openModal(tab = 'register') {
             const modal = document.getElementById('authModal');
             if (!modal) return;
-            
+
             modal.style.display = 'flex';
             document.body.style.overflow = 'hidden';
             switchTab(tab);
@@ -181,7 +219,7 @@ try {
         function closeModal() {
             const modal = document.getElementById('authModal');
             if (!modal) return;
-            
+
             modal.style.display = 'none';
             document.body.style.overflow = '';
         }
@@ -251,30 +289,30 @@ try {
                 method: 'POST',
                 body: formData
             })
-            .then(response => response.json())
-            .then(data => {
-                console.log('Ответ регистрации:', data);
-                
-                if (data.success) {
-                    alert('Регистрация успешна!');
-                    closeModal();
-                    location.reload(); // Перезагружаем страницу
-                } else {
-                    if (data.errors) {
-                        let errorMessage = 'Ошибки:\n';
-                        for (let field in data.errors) {
-                            errorMessage += `• ${data.errors[field]}\n`;
-                        }
-                        alert(errorMessage);
+                .then(response => response.json())
+                .then(data => {
+                    console.log('Ответ регистрации:', data);
+
+                    if (data.success) {
+                        alert('Регистрация успешна!');
+                        closeModal();
+                        location.reload(); // Перезагружаем страницу
                     } else {
-                        alert(data.message || 'Ошибка регистрации');
+                        if (data.errors) {
+                            let errorMessage = 'Ошибки:\n';
+                            for (let field in data.errors) {
+                                errorMessage += `• ${data.errors[field]}\n`;
+                            }
+                            alert(errorMessage);
+                        } else {
+                            alert(data.message || 'Ошибка регистрации');
+                        }
                     }
-                }
-            })
-            .catch(error => {
-                console.error('Ошибка регистрации:', error);
-                alert('Произошла ошибка при регистрации');
-            });
+                })
+                .catch(error => {
+                    console.error('Ошибка регистрации:', error);
+                    alert('Произошла ошибка при регистрации');
+                });
         }
 
         // === ОБРАБОТКА АВТОРИЗАЦИИ ===
@@ -297,36 +335,36 @@ try {
                 method: 'POST',
                 body: formData
             })
-            .then(response => response.json())
-            .then(data => {
-                console.log('Ответ авторизации:', data);
-                
-                if (data.success) {
-                    alert('Вход выполнен успешно!');
-                    closeModal();
-                    location.reload(); // Перезагружаем страницу
-                } else {
-                    if (data.errors) {
-                        let errorMessage = 'Ошибки:\n';
-                        for (let field in data.errors) {
-                            errorMessage += `• ${data.errors[field]}\n`;
-                        }
-                        alert(errorMessage);
+                .then(response => response.json())
+                .then(data => {
+                    console.log('Ответ авторизации:', data);
+
+                    if (data.success) {
+                        alert('Вход выполнен успешно!');
+                        closeModal();
+                        location.reload(); // Перезагружаем страницу
                     } else {
-                        alert(data.message || 'Ошибка авторизации');
+                        if (data.errors) {
+                            let errorMessage = 'Ошибки:\n';
+                            for (let field in data.errors) {
+                                errorMessage += `• ${data.errors[field]}\n`;
+                            }
+                            alert(errorMessage);
+                        } else {
+                            alert(data.message || 'Ошибка авторизации');
+                        }
                     }
-                }
-            })
-            .catch(error => {
-                console.error('Ошибка авторизации:', error);
-                alert('Произошла ошибка при входе');
-            });
+                })
+                .catch(error => {
+                    console.error('Ошибка авторизации:', error);
+                    alert('Произошла ошибка при входе');
+                });
         }
 
         // === ДОБАВЛЕНИЕ ОБЪЯВЛЕНИЯ ===
         function handleAddAd() {
             <?php if ($is_logged_in): ?>
-                alert('Функция добавления объявления в разработке');
+                window.location.href = 'add_ad.php';
             <?php else: ?>
                 alert('Для добавления объявления необходимо войти в систему');
                 openModal('login');
@@ -338,7 +376,7 @@ try {
             const btn = document.querySelector('.show-more-btn');
             btn.disabled = true;
             btn.innerHTML = 'Загрузка...';
-            
+
             // Здесь будет AJAX запрос для загрузки дополнительных объявлений
             setTimeout(() => {
                 btn.disabled = false;
@@ -348,10 +386,10 @@ try {
         }
 
         // === ИНИЦИАЛИЗАЦИЯ ===
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', function () {
             // Обработчики для кнопок авторизации
             document.querySelectorAll('.auth-btn[data-tab]').forEach(btn => {
-                btn.addEventListener('click', function(e) {
+                btn.addEventListener('click', function (e) {
                     e.preventDefault();
                     const tab = this.getAttribute('data-tab');
                     openModal(tab);
@@ -359,7 +397,7 @@ try {
             });
 
             // Закрытие модалки по Escape
-            document.addEventListener('keydown', function(e) {
+            document.addEventListener('keydown', function (e) {
                 if (e.key === 'Escape') {
                     closeModal();
                 }
@@ -367,4 +405,5 @@ try {
         });
     </script>
 </body>
+
 </html>

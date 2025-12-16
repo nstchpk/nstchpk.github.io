@@ -37,7 +37,7 @@ if (!empty($response['errors'])) {
 
 try {
     // Ищем пользователя
-    $sql = "SELECT user_id, user_name, user_email, user_phone, user_password 
+    $sql = "SELECT user_id, user_name, user_email, user_phone, user_password, role_id
             FROM users WHERE user_email = ?";
     $stmt = $pdo->prepare($sql);
     $stmt->execute([$email]);
@@ -61,13 +61,16 @@ try {
     $_SESSION['user_name'] = $user['user_name'];
     $_SESSION['user_email'] = $user['user_email'];
     $_SESSION['user_phone'] = $user['user_phone'];
-    
+    $_SESSION['role_id'] = $user['role_id'];
+
     $response['success'] = true;
     $response['message'] = 'Авторизация успешна';
     $response['user'] = [
         'id' => $user['user_id'],
         'name' => $user['user_name'],
-        'email' => $user['user_email']
+        'email' => $user['user_email'],
+        'role_id' => $user['role_id']
+
     ];
     
 } catch (PDOException $e) {

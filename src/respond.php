@@ -30,7 +30,11 @@ if (!$ad_id) {
 
 try {
     // Проверяем существование объявления
-    $check_ad = $pdo->prepare("SELECT ads_id FROM ads WHERE ads_id = ?");
+    $check_ad = $pdo->prepare("
+    SELECT ads_id FROM ads 
+    WHERE ads_id = ? AND is_verified = 1
+");
+
     $check_ad->execute([$ad_id]);
     
     if (!$check_ad->fetch()) {

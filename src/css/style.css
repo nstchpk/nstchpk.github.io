@@ -20,24 +20,47 @@ body {
 
 /* ===== ХЕДЕР ===== */
 .header {
-    background: white;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-    position: sticky;
-    top: 0;
-    z-index: 1000;
+    background: #fff;
+    border-bottom: 1px solid #eee;
 }
 
 .header-top {
+    width: 1200px;
+    /* как в Figma */
+    height: 75px;
+    /* ТОЧНО */
+    margin: 0 auto;
+    /* центр */
     display: flex;
-    justify-content: space-between;
     align-items: center;
-    padding: 15px 0;
+    justify-content: space-between;
+}
+
+.logo {
+    display: flex;
+    align-items: center;
+    /* вертикальный центр */
+    gap: 12px;
 }
 
 .logo-image {
+    width: 40px;
     height: 40px;
-    width: auto;
+    display: block;
+    /* важно */
 }
+
+.logo-text {
+    font-size: 20px;
+    font-weight: 600;
+    color: #242424;
+    line-height: 1;
+    /* 🔥 ключевая строка */
+    display: flex;
+    align-items: center;
+    /* 🔥 центр относительно иконки */
+}
+
 
 .auth-buttons {
     display: flex;
@@ -90,16 +113,17 @@ body {
     background: white;
     border-radius: 12px;
     overflow: hidden;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
     transition: transform 0.3s;
-    flex: 0 0 calc(20% - 20px); /* 5 колонок на десктопе */
+    flex: 0 0 calc(20% - 20px);
+    /* 5 колонок на десктопе */
     max-width: calc(20% - 20px);
     min-width: 200px;
 }
 
 .ad-card:hover {
     transform: translateY(-5px);
-    box-shadow: 0 6px 16px rgba(0,0,0,0.15);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
 }
 
 .ad-img {
@@ -142,10 +166,43 @@ body {
 }
 
 .section-title {
-    font-size: 28px;
+    font-size: 40px;
     font-weight: 600;
-    color: #181818;
+    color: #111;
+    margin: 40px 0 24px;
 }
+
+.ad-status {
+    display: inline-block;
+    margin-left: 6px;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.ad-status.pending {
+    color: #ff9800;
+}
+
+.ad-status.approved {
+    color: #4caf50;
+}
+
+.edit-ad-btn {
+    display: inline-block;
+    margin-top: 16px;
+    padding: 10px 16px;
+    border-radius: 8px;
+    background: #ff006b;
+    color: white;
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.edit-ad-btn:hover {
+    background: #c2185b;
+}
+
 
 .add-btn {
     background: #E91E63;
@@ -205,7 +262,7 @@ body {
     left: 0;
     width: 100%;
     height: 100%;
-    background: rgba(0,0,0,0.5);
+    background: rgba(0, 0, 0, 0.5);
     z-index: 2000;
     display: flex;
     align-items: center;
@@ -226,6 +283,7 @@ body {
         opacity: 0;
         transform: translateY(-20px);
     }
+
     to {
         opacity: 1;
         transform: translateY(0);
@@ -363,65 +421,270 @@ body {
 }
 
 /* ===== ФУТЕР ===== */
+/* ===== ФУТЕР (ПО МАКЕТУ) ===== */
 .footer {
-    background: #181818;
-    color: white;
+    background: #ffffff;
+    border-top: 1px solid #ececec;
     padding: 40px 0;
-    margin-top: 60px;
+    margin-top: 80px;
 }
 
 .footer-inner {
+    max-width: 1200px;
+    margin: 0 auto;
+
     display: flex;
     justify-content: space-between;
     align-items: center;
 }
 
 .footer-email {
-    color: #aaa;
+    font-family: 'Inter', sans-serif;
+    font-size: 16px;
+    font-weight: 400;
+    color: #FF006B;
 }
 
 .footer-links a {
-    color: white;
+    font-family: 'Inter', sans-serif;
+    font-size: 16px;
+    font-weight: 400;
+    color: #989898;
     text-decoration: none;
-    transition: color 0.3s;
 }
 
 .footer-links a:hover {
+    color: #FF006B;
+}
+
+
+/* ===== ADD AD PAGE (FLEX VERSION) ===== */
+
+.add-ad-page {
+    padding: 60px 0;
+}
+
+.add-ad-form {
+    max-width: 900px;
+    margin: 0 auto;
+}
+
+/* ОСНОВНОЙ КОНТЕЙНЕР */
+.add-ad-grid {
+    display: flex;
+    /* ← FLEX */
+    align-items: flex-start;
+    gap: 40px;
+}
+
+/* ===== ЛЕВАЯ ЧАСТЬ (ФОТО) ===== */
+.image-upload {
+    cursor: pointer;
+}
+
+.upload-box {
+    width: 240px;
+    height: 240px;
+    border: 2px dashed #ccc;
+    border-radius: 16px;
+
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+
+    color: #777;
+    transition: all 0.3s;
+}
+
+.upload-box:hover {
+    border-color: #E91E63;
     color: #E91E63;
 }
+
+.upload-plus {
+    font-size: 32px;
+    font-weight: 600;
+    margin-bottom: 8px;
+}
+
+.upload-text {
+    text-align: center;
+    font-size: 14px;
+    line-height: 1.4;
+}
+
+/* ===== ПРАВАЯ ЧАСТЬ (ПОЛЯ) ===== */
+.add-ad-fields {
+    flex: 1;
+    /* занимает всё оставшееся место */
+}
+
+.add-ad-fields input,
+.add-ad-fields textarea {
+    width: 100%;
+    border: none;
+    border-bottom: 1px solid #ddd;
+    padding: 12px 4px;
+    font-size: 18px;
+    margin-bottom: 24px;
+    font-family: 'Inter', sans-serif;
+}
+
+.add-ad-fields input::placeholder,
+.add-ad-fields textarea::placeholder {
+    color: #aaa;
+}
+
+.add-ad-fields textarea {
+    resize: none;
+    height: 120px;
+}
+
+/* ===== КНОПКА ===== */
+.publish-btn {
+    display: block;
+    margin: 40px auto 12px;
+    background: #F8A5C2;
+    color: white;
+    border: none;
+    padding: 16px 40px;
+    font-size: 16px;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: background 0.3s;
+}
+
+.publish-btn:hover {
+    background: #E91E63;
+}
+
+.form-hint {
+    text-align: center;
+    font-size: 14px;
+    color: #777;
+}
+
+.photo-upload {
+    width: 200px;
+}
+
+.photo-placeholder {
+    width: 200px;
+    height: 200px;
+    border: 2px dashed #bbb;
+    border-radius: 12px;
+    cursor: pointer;
+
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+
+    color: #999;
+    transition: all 0.2s;
+}
+
+.photo-placeholder:hover {
+    border-color: #e91e63;
+    color: #e91e63;
+}
+
+.photo-plus {
+    font-size: 32px;
+    font-weight: 600;
+    color: #e91e63;
+    margin-bottom: 8px;
+}
+
+.photo-text {
+    font-size: 14px;
+    text-align: center;
+}
+
+.photo-preview {
+    position: relative;
+    width: 200px;
+    height: 200px;
+}
+
+.photo-preview img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 12px;
+}
+
+.remove-photo {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    border: none;
+
+    background: rgba(0, 0, 0, 0.6);
+    color: white;
+    font-size: 18px;
+    cursor: pointer;
+}
+
+.remove-photo:hover {
+    background: #e91e63;
+}
+
+
+/* ===== АДАПТИВ ===== */
+@media (max-width: 768px) {
+    .add-ad-grid {
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .add-ad-fields {
+        width: 100%;
+    }
+}
+
 
 /* ===== АДАПТИВНОСТЬ ===== */
 
 /* Планшет (768px - 1023px) */
 @media (max-width: 1023px) {
     .ad-card {
-        flex: 0 0 calc(33.333% - 16px); /* 3 колонки */
+        flex: 0 0 calc(33.333% - 16px);
+        /* 3 колонки */
         max-width: calc(33.333% - 16px);
     }
-    
+
     .add-text {
-        display: block; /* Показываем текст на планшете */
+        display: block;
+        /* Показываем текст на планшете */
     }
 }
 
 /* Большие мобильные (576px - 767px) */
 @media (max-width: 767px) {
     .ad-card {
-        flex: 0 0 calc(50% - 16px); /* 2 колонки */
+        flex: 0 0 calc(50% - 16px);
+        /* 2 колонки */
         max-width: calc(50% - 16px);
     }
-    
+
     .add-text {
-        display: none; /* Скрываем текст, оставляем только + */
+        display: none;
+        /* Скрываем текст, оставляем только + */
     }
-    
+
     .add-btn {
         padding: 12px;
         width: 44px;
         height: 44px;
         justify-content: center;
     }
-    
+
     .footer-inner {
         flex-direction: column;
         gap: 20px;
@@ -434,41 +697,42 @@ body {
     .container {
         padding: 0 15px;
     }
-    
+
     .ads-grid {
         gap: 16px;
     }
-    
+
     .ad-card {
-        flex: 0 0 100%; /* 1 колонка */
+        flex: 0 0 100%;
+        /* 1 колонка */
         max-width: 100%;
     }
-    
+
     .section-header {
         flex-direction: column;
         align-items: flex-start;
         gap: 15px;
     }
-    
+
     .add-btn {
         align-self: flex-end;
     }
-    
+
     .modal-content {
         padding: 24px;
     }
-    
+
     .form-two-columns {
         flex-direction: column;
         gap: 16px;
     }
-    
+
     .header-top {
         flex-direction: column;
         gap: 15px;
         padding: 20px 0;
     }
-    
+
     .auth-buttons {
         width: 100%;
         justify-content: center;
@@ -481,12 +745,12 @@ body {
         flex: 0 0 100%;
         max-width: 100%;
     }
-    
+
     .add-btn {
         width: 40px;
         height: 40px;
     }
-    
+
     .add-icon {
         font-size: 18px;
     }
@@ -510,7 +774,7 @@ body {
         flex: 0 0 calc(50% - 12px);
         max-width: calc(50% - 12px);
     }
-    
+
     .ads-grid {
         gap: 12px;
     }

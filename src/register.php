@@ -57,11 +57,11 @@ try {
     $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
     
     // Вставка пользователя
-    $sql = "INSERT INTO users (user_name, user_email, user_phone, user_password) 
-            VALUES (?, ?, ?, ?)";
+    $sql = "INSERT INTO users (user_name, user_email, user_phone, user_password, role_id) 
+            VALUES (?, ?, ?, ?, ?)";
     $stmt = $pdo->prepare($sql);
     
-    if ($stmt->execute([$name, $email, $phone, $hashedPassword])) {
+    if ($stmt->execute([$name, $email, $phone, $hashedPassword, 2])) {
         // Авторизуем пользователя
         $user_id = $pdo->lastInsertId();
         
@@ -69,6 +69,7 @@ try {
         $_SESSION['user_name'] = $name;
         $_SESSION['user_email'] = $email;
         $_SESSION['user_phone'] = $phone;
+        $_SESSION['role_id'] = 2;
         
         $response['success'] = true;
         $response['message'] = 'Регистрация успешна';
