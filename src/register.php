@@ -20,9 +20,9 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 }
 
 // Получаем данные
-$name = trim($_POST['name'] ?? '');
-$email = trim($_POST['email'] ?? '');
-$phone = trim($_POST['phone'] ?? '');
+$name =  htmlspecialchars(trim($_POST['name'] ?? ''));
+$email =  htmlspecialchars(trim($_POST['email'] ?? ''));
+$phone =  htmlspecialchars(trim($_POST['phone'] ?? ''));
 $password = $_POST['password'] ?? '';
 $confirm_password = $_POST['confirm_password'] ?? '';
 

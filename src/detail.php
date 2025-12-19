@@ -18,14 +18,17 @@ $id = intval($_GET['id']);
 
 try {
     // Получаем данные объявления
+    // В SQL запросе для получения объявления добавьте JOIN с категорией:
     $sql = "SELECT 
-                ads.*, 
-                users.user_name,
-                users.user_phone,
-                users.user_email
-            FROM ads
-            LEFT JOIN users ON ads.user_id = users.user_id
-            WHERE ads.ads_id = :id";
+            ads.*, 
+            users.user_name,
+            users.user_phone,
+            users.user_email,
+            category.name_category  -- Добавляем название категории
+        FROM ads
+        LEFT JOIN users ON ads.user_id = users.user_id
+        LEFT JOIN category ON ads.category_id = category.id_category  -- JOIN с категорией
+        WHERE ads.ads_id = :id";
 
     $stmt = $pdo->prepare($sql);
     $stmt->execute([':id' => $id]);

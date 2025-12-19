@@ -11,26 +11,49 @@ $user_id = $_SESSION['user_id'] ?? null;
 // Получаем объявления с учетом ролей и модерации
 $role_id = $_SESSION['role_id'] ?? null;
 
+// Получаем выбранную категорию
+$selected_category = $_GET['category'] ?? 'all';
+
+// Получаем все категории
+$categories_sql = "SELECT * FROM category ORDER BY id_category";
+$categories = $pdo->query($categories_sql)->fetchAll();
+
 try {
-    if ($role_id === 1) {
-        // АДМИН: видит все объявления
-        $sql = "
-            SELECT * FROM ads
-            ORDER BY is_verified ASC, created_at DESC
-            LIMIT 15
-        ";
-    } else {
-        // ГОСТИ И ПОЛЬЗОВАТЕЛИ: только проверенные
-        $sql = "
-            SELECT * FROM ads
-            WHERE is_verified = 1
-            ORDER BY created_at DESC
-            LIMIT 15
-        ";
+    // Базовая часть SQL запроса
+    $sql_conditions = [];
+    $params = [];
+
+    // Условия для ролей
+    if ($role_id !== 1) {
+        // Для не-админов показываем только проверенные
+        $sql_conditions[] = "ads.is_verified = 1";
     }
 
+    // Условие для категории
+    if ($selected_category !== 'all' && is_numeric($selected_category)) {
+        $sql_conditions[] = "ads.category_id = :category_id";
+        $params[':category_id'] = $selected_category;
+    }
+
+    // Собираем SQL запрос
+    $sql = "SELECT ads.* FROM ads";
+
+    if (!empty($sql_conditions)) {
+        $sql .= " WHERE " . implode(" AND ", $sql_conditions);
+    }
+
+    // Сортировка
+    if ($role_id === 1) {
+        // Админ: сначала непроверенные
+        $sql .= " ORDER BY ads.is_verified ASC, ads.created_at DESC";
+    } else {
+        $sql .= " ORDER BY ads.created_at DESC";
+    }
+
+    $sql .= " LIMIT 15";
+
     $stmt = $pdo->prepare($sql);
-    $stmt->execute();
+    $stmt->execute($params);
     $ads = $stmt->fetchAll();
 
 } catch (PDOException $e) {
@@ -51,6 +74,135 @@ try {
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* Стили для выпадающего списка категорий */
+        .category-filter-container {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin: 20px 0 30px;
+            flex-wrap: wrap;
+        }
+
+        .category-label {
+            font-size: 16px;
+            font-weight: 500;
+            color: #333;
+            white-space: nowrap;
+        }
+
+        .category-select {
+            padding: 10px 16px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 500;
+            color: #333;
+            background-color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            min-width: 200px;
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%23666' viewBox='0 0 16 16'%3E%3Cpath d='M7.247 11.14L2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 16px center;
+            background-size: 16px;
+            padding-right: 40px;
+        }
+
+        .category-select:hover {
+            border-color: #E91E63;
+        }
+
+        .category-select:focus {
+            outline: none;
+            border-color: #E91E63;
+            box-shadow: 0 0 0 3px rgba(233, 30, 99, 0.1);
+        }
+
+        .category-option {
+            padding: 8px 12px;
+        }
+
+        .category-option.all {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .category-option.food {
+            color: #4CAF50;
+        }
+
+        .category-option.clothes {
+            color: #2196F3;
+        }
+
+        .category-option.tech {
+            color: #FF9800;
+        }
+
+        /* Стиль для метки категории в карточке */
+        .category-badge {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+            margin-left: 10px;
+            vertical-align: middle;
+        }
+
+        .category-food {
+            background: #4CAF50;
+            color: white;
+        }
+
+        .category-clothes {
+            background: #2196F3;
+            color: white;
+        }
+
+        .category-tech {
+            background: #FF9800;
+            color: white;
+        }
+
+        /* Кнопка сброса фильтра */
+        .reset-filter-btn {
+            padding: 8px 16px;
+            background: #f0f0f0;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            color: #666;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .reset-filter-btn:hover {
+            background: #e0e0e0;
+            border-color: #d0d0d0;
+        }
+
+        /* Индикатор выбранной категории */
+        .selected-category-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 16px;
+            background: #f8f8f8;
+            border-radius: 8px;
+            font-size: 14px;
+            margin-top: 10px;
+        }
+
+        .selected-category-info strong {
+            font-weight: 600;
+        }
+    </style>
 </head>
 
 <body>
@@ -62,7 +214,6 @@ try {
                     <span class="logo-text">Объявления</span>
                 </div>
 
-                <!-- ОДИН блок auth-buttons, а не два -->
                 <div class="auth-buttons">
                     <?php if ($is_logged_in): ?>
                         <?php if (($role_id ?? null) === 1): ?>
@@ -83,7 +234,6 @@ try {
                         <button class="auth-link" onclick="openModal('login')">Вход</button>
                     <?php endif; ?>
                 </div>
-                <!-- УДАЛИТЬ этот второй блок auth-buttons -->
             </div>
         </div>
     </header>
@@ -98,9 +248,76 @@ try {
                 </button>
             </div>
 
+            <!-- Выпадающий список категорий -->
+            <div class="category-filter-container">
+                <label for="categorySelect" class="category-label">Категория:</label>
+                <select id="categorySelect" class="category-select" onchange="filterByCategory()">
+                    <option value="all" class="category-option all" <?= $selected_category === 'all' ? 'selected' : '' ?>>
+                        Все объявления
+                    </option>
+                    <?php foreach ($categories as $category):
+                        // Определяем CSS класс для опции
+                        $category_class = '';
+                        if ($category['name_category'] === 'Еда')
+                            $category_class = 'food';
+                        if ($category['name_category'] === 'Одежда')
+                            $category_class = 'clothes';
+                        if ($category['name_category'] === 'Техника')
+                            $category_class = 'tech';
+                    ?>
+                        <option value="<?= $category['id_category'] ?>" 
+                                class="category-option <?= $category_class ?>" 
+                                <?= $selected_category == $category['id_category'] ? 'selected' : '' ?>>
+                            <?= htmlspecialchars($category['name_category']) ?>
+                        </option>
+                    <?php endforeach; ?>
+                </select>
+
+                <?php if ($selected_category !== 'all'): ?>
+                    <a href="?category=all" class="reset-filter-btn">
+                        Сбросить фильтр
+                    </a>
+                <?php endif; ?>
+            </div>
+
+            <?php if ($selected_category !== 'all'): ?>
+                <?php 
+                    // Получаем название выбранной категории
+                    $selected_category_name = '';
+                    foreach ($categories as $cat) {
+                        if ($cat['id_category'] == $selected_category) {
+                            $selected_category_name = $cat['name_category'];
+                            break;
+                        }
+                    }
+                ?>
+                <div class="selected-category-info">
+                    <strong>Показаны объявления категории:</strong>
+                    <span class="category-badge category-<?= 
+                        $selected_category_name === 'Еда' ? 'food' :
+                        ($selected_category_name === 'Одежда' ? 'clothes' : 'tech')
+                    ?>">
+                        <?= htmlspecialchars($selected_category_name) ?>
+                    </span>
+                    <a href="?category=all" style="margin-left: auto; font-size: 13px; color: #666; text-decoration: none;">
+                        Показать все
+                    </a>
+                </div>
+            <?php endif; ?>
+
             <div class="ads-grid">
                 <?php if (!empty($ads)): ?>
-                    <?php foreach ($ads as $ad): ?>
+                    <?php foreach ($ads as $ad):
+                        // Получаем название категории для объявления
+                        $category_name = '';
+                        if ($ad['category_id']) {
+                            $cat_sql = "SELECT name_category FROM category WHERE id_category = ?";
+                            $cat_stmt = $pdo->prepare($cat_sql);
+                            $cat_stmt->execute([$ad['category_id']]);
+                            $category = $cat_stmt->fetch();
+                            $category_name = $category['name_category'] ?? '';
+                        }
+                        ?>
                         <div class="ad-card">
                             <div class="ad-img">
                                 <a href="detail.php?id=<?= $ad['ads_id'] ?>">
@@ -112,6 +329,15 @@ try {
                             <div class="ad-title">
                                 <?= htmlspecialchars($ad['ads_title']) ?>
 
+                                <?php if ($category_name): ?>
+                                    <span class="category-badge category-<?=
+                                        $category_name === 'Еда' ? 'food' :
+                                        ($category_name === 'Одежда' ? 'clothes' : 'tech')
+                                        ?>">
+                                        <?= htmlspecialchars($category_name) ?>
+                                    </span>
+                                <?php endif; ?>
+
                                 <?php if (($role_id ?? null) === 1): ?>
                                     <?php if ((int) $ad['is_verified'] === 0): ?>
                                         <span class="ad-status pending">🕒 На модерации</span>
@@ -120,12 +346,15 @@ try {
                                     <?php endif; ?>
                                 <?php endif; ?>
                             </div>
-
                         </div>
                     <?php endforeach; ?>
                 <?php else: ?>
                     <p style="text-align: center; width: 100%; padding: 40px; color: #666;">
-                        Пока нет объявлений
+                        <?php if ($selected_category !== 'all'): ?>
+                            В категории "<?= htmlspecialchars($selected_category_name) ?>" пока нет объявлений
+                        <?php else: ?>
+                            Пока нет объявлений
+                        <?php endif; ?>
                     </p>
                 <?php endif; ?>
             </div>
@@ -215,6 +444,18 @@ try {
     </div>
 
     <script>
+        // === ФИЛЬТРАЦИЯ ПО КАТЕГОРИИ ===
+        function filterByCategory() {
+            const select = document.getElementById('categorySelect');
+            const categoryId = select.value;
+            
+            if (categoryId === 'all') {
+                window.location.href = 'index.php';
+            } else {
+                window.location.href = '?category=' + categoryId;
+            }
+        }
+
         // === МОДАЛЬНОЕ ОКНО ===
         function openModal(tab = 'register') {
             const modal = document.getElementById('authModal');
@@ -224,7 +465,7 @@ try {
 
             modal.style.display = 'flex';
             document.body.style.position = 'fixed';
-            document.body.style.top = `-${scrollY}px`; // Фиксируем позицию
+            document.body.style.top = `-${scrollY}px`;
             document.body.style.width = '100%';
 
             switchTab(tab);
@@ -239,7 +480,6 @@ try {
             document.body.style.top = '';
             document.body.style.width = '';
 
-            // ВОССТАНАВЛИВАЕМ SCROLL
             if (scrollY) {
                 window.scrollTo(0, parseInt(scrollY || '0') * -1);
             }
@@ -277,7 +517,6 @@ try {
             const confirmPassword = document.getElementById('regConfirmPassword')?.value;
             const agree = document.getElementById('agree')?.checked;
 
-            // Валидация на клиенте
             if (!name || !email || !phone || !password || !confirmPassword) {
                 alert('Все поля обязательны для заполнения');
                 return;
@@ -298,7 +537,6 @@ try {
                 return;
             }
 
-            // Отправка данных на сервер
             const formData = new FormData();
             formData.append('name', name);
             formData.append('email', email);
@@ -317,7 +555,7 @@ try {
                     if (data.success) {
                         alert('Регистрация успешна!');
                         closeModal();
-                        location.reload(); // Перезагружаем страницу
+                        location.reload();
                     } else {
                         if (data.errors) {
                             let errorMessage = 'Ошибки:\n';
@@ -363,7 +601,7 @@ try {
                     if (data.success) {
                         alert('Вход выполнен успешно!');
                         closeModal();
-                        location.reload(); // Перезагружаем страницу
+                        location.reload();
                     } else {
                         if (data.errors) {
                             let errorMessage = 'Ошибки:\n';
@@ -398,7 +636,6 @@ try {
             btn.disabled = true;
             btn.innerHTML = 'Загрузка...';
 
-            // Здесь будет AJAX запрос для загрузки дополнительных объявлений
             setTimeout(() => {
                 btn.disabled = false;
                 btn.innerHTML = 'Показать ещё <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#e91e63" stroke-width="2"><path d="M6 9l6 6 6-6" /></svg>';
@@ -408,7 +645,6 @@ try {
 
         // === ИНИЦИАЛИЗАЦИЯ ===
         document.addEventListener('DOMContentLoaded', function () {
-            // Обработчики для кнопок авторизации
             document.querySelectorAll('.auth-btn[data-tab]').forEach(btn => {
                 btn.addEventListener('click', function (e) {
                     e.preventDefault();
@@ -417,7 +653,6 @@ try {
                 });
             });
 
-            // Закрытие модалки по Escape
             document.addEventListener('keydown', function (e) {
                 if (e.key === 'Escape') {
                     closeModal();

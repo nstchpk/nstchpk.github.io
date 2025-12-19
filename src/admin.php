@@ -1,5 +1,14 @@
 <?php
-require_once 'init.php';
+require_once 'config.php';
+session_start();
+require_once 'db_connect.php';
+
+$is_logged_in = isset($_SESSION['user_id']);
+$user_name = $_SESSION['user_name'] ?? '';
+$role_id = $_SESSION['role_id'] ?? null;
+
+// Определяем, является ли пользователь администратором
+$is_admin = ($role_id === 1);
 
 // Только администратор
 if (!$is_admin) {
@@ -14,11 +23,13 @@ $total_users = $pdo->query("SELECT COUNT(*) FROM users")->fetchColumn();
 $total_responses = $pdo->query("SELECT COUNT(*) FROM responses")->fetchColumn();
 
 // Объявления
+// Обновите SQL запрос:
 $sql = "
-SELECT ads.*, users.user_name,
+SELECT ads.*, users.user_name, category.name_category,
        COUNT(responses.responses_id) AS response_count
 FROM ads
 JOIN users ON users.user_id = ads.user_id
+LEFT JOIN category ON ads.category_id = category.id_category  -- Добавляем
 LEFT JOIN responses ON responses.ads_id = ads.ads_id
 GROUP BY ads.ads_id
 ORDER BY ads.created_at DESC
@@ -103,6 +114,7 @@ $ads = $pdo->query($sql)->fetchAll();
                         <th>Автор</th>
                         <th>Цена</th>
                         <th>Отклики</th>
+                        <th>Категория</th> <!-- Здесь -->
                         <th>Статус</th>
                         <th>Дата</th>
                         <th>Действия</th>
@@ -120,6 +132,13 @@ $ads = $pdo->query($sql)->fetchAll();
                             <td><?= htmlspecialchars($ad['user_name']) ?></td>
                             <td><?= number_format($ad['ads_price'], 0, '', ' ') ?> ₽</td>
                             <td><?= $ad['response_count'] ?></td>
+                            <td> <!-- Здесь -->
+                                <?php if (!empty($ad['name_category'])): ?>
+                                    <span class="category-badge"><?= htmlspecialchars($ad['name_category']) ?></span>
+                                <?php else: ?>
+                                    <span style="color: #999;">Не указана</span>
+                                <?php endif; ?>
+                            </td>
                             <td>
                                 <?php if ($ad['is_verified']): ?>
                                     <span class="ad-status approved">Одобрено</span>
