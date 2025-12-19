@@ -62,8 +62,20 @@ try {
                     <span class="logo-text">Объявления</span>
                 </div>
 
+                <!-- ОДИН блок auth-buttons, а не два -->
                 <div class="auth-buttons">
                     <?php if ($is_logged_in): ?>
+                        <?php if (($role_id ?? null) === 1): ?>
+                            <!-- Кнопка админ-панели только для администратора -->
+                            <a href="admin.php" class="admin-panel-btn">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2">
+                                    <path
+                                        d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4" />
+                                </svg>
+                                <span>Админ-панель</span>
+                            </a>
+                        <?php endif; ?>
                         <span class="user-welcome">Здравствуйте, <?= htmlspecialchars($user_name) ?></span>
                         <a href="logout.php" class="logout-link">Выход</a>
                     <?php else: ?>
@@ -71,6 +83,7 @@ try {
                         <button class="auth-link" onclick="openModal('login')">Вход</button>
                     <?php endif; ?>
                 </div>
+                <!-- УДАЛИТЬ этот второй блок auth-buttons -->
             </div>
         </div>
     </header>

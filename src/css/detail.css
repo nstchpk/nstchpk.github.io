@@ -15,7 +15,6 @@
     padding: 20px 0;
     flex-wrap: wrap;
 }
-
 /* Контейнер для фото */
 .ad-photo-container {
     width: 100%;
@@ -49,7 +48,7 @@
     background: white;
     border-radius: 20px;
     padding: 30px;
-    box-shadow: 0 2px 20px #FFFFFF;
+    box-shadow: 0 2px 20px rgba(0,0,0,0.05);
 }
 
 .responses-header {
@@ -186,7 +185,7 @@
 .auth-buttons {
     display: flex;
     align-items: center;
-    gap: 15px;
+    gap: 25px;
 }
 
 .auth-btn {
@@ -307,7 +306,7 @@
     background: white;
     border-radius: 12px;
     padding: 30px;
-    box-shadow: 0 2px 20px #FFFFFF;
+    box-shadow: 0 2px 20px rgba(0,0,0,0.05);
 }
 
 .description-card h3 {
@@ -386,11 +385,11 @@
     .detail-wrapper {
         gap: 40px;
     }
-
+    
     .ad-price-detail {
         font-size: 42px;
     }
-
+    
     .block-title {
         font-size: 28px;
     }
@@ -401,39 +400,39 @@
         flex-direction: column;
         gap: 40px;
     }
-
+    
     .detail-left-column,
     .detail-info-column {
         width: 100%;
         max-width: 100%;
     }
-
+    
     .ad-photo-container {
         max-width: 100%;
         height: 350px;
     }
-
+    
     .ad-price-detail {
         font-size: 36px;
     }
-
+    
     .block-title {
         font-size: 26px;
     }
-
+    
     .ad-title-detail {
         font-size: 24px;
     }
-
+    
     .author-contact-line {
         font-size: 16px;
     }
-
+    
     .respond-main-btn {
         font-size: 16px;
         padding: 18px;
     }
-
+    
     .responses-count {
         font-size: 26px;
     }
@@ -443,72 +442,72 @@
     .detail-main {
         padding: 20px 0;
     }
-
+    
     .ad-photo-container {
         height: 300px;
         border-radius: 15px;
         margin-bottom: 30px;
     }
-
+    
     .responses-left-block {
         padding: 20px;
         border-radius: 15px;
     }
-
+    
     .ad-price-detail {
         font-size: 32px;
     }
-
+    
     .ad-title-detail {
         font-size: 22px;
     }
-
+    
     .author-contact-block {
         padding: 15px;
     }
-
+    
     .author-contact-line {
         flex-direction: column;
         align-items: flex-start;
         gap: 8px;
     }
-
+    
     .respond-main-btn {
         padding: 16px;
         font-size: 16px;
         border-radius: 10px;
     }
-
+    
     .respond-main-btn.responded {
         padding-left: 50px;
     }
-
+    
     .respond-main-btn.responded::before {
         left: 18px;
         width: 20px;
         height: 20px;
     }
-
+    
     .detail-top {
         flex-direction: column;
         align-items: flex-start;
         gap: 15px;
     }
-
+    
     .back-link {
         order: 2;
         width: 100%;
         justify-content: center;
     }
-
+    
     .edit-link {
         order: 1;
     }
-
+    
     .block-title {
         font-size: 22px;
     }
-
+    
     .responses-count {
         font-size: 22px;
     }
@@ -518,54 +517,54 @@
     .ad-photo-container {
         height: 250px;
     }
-
+    
     .ad-price-detail {
         font-size: 28px;
     }
-
+    
     .ad-title-detail {
         font-size: 20px;
     }
-
+    
     .respond-main-btn {
         font-size: 15px;
         padding: 14px;
     }
-
+    
     .respond-main-btn.responded {
         padding-left: 45px;
     }
-
+    
     .respond-main-btn.responded::before {
         left: 15px;
         width: 18px;
         height: 18px;
     }
-
+    
     .description-card {
         padding: 20px;
     }
-
+    
     .description-card h3 {
         font-size: 18px;
     }
-
+    
     .description-card p {
         font-size: 15px;
     }
-
+    
     .block-title {
         font-size: 20px;
     }
-
+    
     .responses-count {
         font-size: 20px;
     }
-
+    
     .response-person-name {
         font-size: 16px;
     }
-
+    
     .response-person-phone {
         font-size: 14px;
     }
@@ -577,7 +576,6 @@
         opacity: 0;
         transform: translateY(20px);
     }
-
     to {
         opacity: 1;
         transform: translateY(0);
@@ -589,21 +587,10 @@
 }
 
 /* Утилитные классы */
-.mb-20 {
-    margin-bottom: 20px;
-}
-
-.mb-30 {
-    margin-bottom: 30px;
-}
-
-.mb-40 {
-    margin-bottom: 40px;
-}
-
-.text-center {
-    text-align: center;
-}
+.mb-20 { margin-bottom: 20px; }
+.mb-30 { margin-bottom: 30px; }
+.mb-40 { margin-bottom: 40px; }
+.text-center { text-align: center; }
 
 /* Улучшение для очень маленьких экранов */
 @media (max-width: 400px) {
@@ -611,24 +598,24 @@
         height: 200px;
         border-radius: 12px;
     }
-
+    
     .ad-price-detail {
         font-size: 24px;
     }
-
+    
     .ad-title-detail {
         font-size: 18px;
     }
-
+    
     .respond-main-btn {
         font-size: 14px;
     }
-
+    
     .back-link {
         font-size: 14px;
         padding: 10px 20px;
     }
-
+    
     .edit-link {
         font-size: 14px;
     }

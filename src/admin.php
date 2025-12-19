@@ -1,305 +1,155 @@
 <?php
-require_once 'config.php';
-session_start();
-require_once 'db_connect.php';
+require_once 'init.php';
 
-// Проверка: только админ
-if (!isset($_SESSION['user_id']) || ($_SESSION['role_id'] ?? null) !== 1) {
+// Только администратор
+if (!$is_admin) {
     header('Location: index.php');
     exit;
 }
 
-try {
-    // Получаем статистику
-    $total_ads = $pdo->query("SELECT COUNT(*) as count FROM ads")->fetch()['count'];
-    $pending_ads = $pdo->query("SELECT COUNT(*) as count FROM ads WHERE is_verified = 0")->fetch()['count'];
-    $total_users = $pdo->query("SELECT COUNT(*) as count FROM users")->fetch()['count'];
-    $total_responses = $pdo->query("SELECT COUNT(*) as count FROM responses")->fetch()['count'];
+// Статистика
+$total_ads = $pdo->query("SELECT COUNT(*) FROM ads")->fetchColumn();
+$pending_ads = $pdo->query("SELECT COUNT(*) FROM ads WHERE is_verified = 0")->fetchColumn();
+$total_users = $pdo->query("SELECT COUNT(*) FROM users")->fetchColumn();
+$total_responses = $pdo->query("SELECT COUNT(*) FROM responses")->fetchColumn();
 
-    // Все объявления с пагинацией
-    $page = isset($_GET['page']) ? max(1, intval($_GET['page'])) : 1;
-    $limit = 20;
-    $offset = ($page - 1) * $limit;
-    
-    $sql = "
-        SELECT ads.*, users.user_name, users.user_email,
-               COUNT(responses.responses_id) as response_count
-        FROM ads
-        JOIN users ON ads.user_id = users.user_id
-        LEFT JOIN responses ON ads.ads_id = responses.ads_id
-        GROUP BY ads.ads_id
-        ORDER BY ads.is_verified ASC, ads.created_at DESC
-        LIMIT :limit OFFSET :offset
-    ";
-    
-    $stmt = $pdo->prepare($sql);
-    $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
-    $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
-    $stmt->execute();
-    $ads = $stmt->fetchAll();
-
-    // Общее количество для пагинации
-    $total_sql = "SELECT COUNT(*) as count FROM ads";
-    $total_count = $pdo->query($total_sql)->fetch()['count'];
-    $total_pages = ceil($total_count / $limit);
-
-} catch (PDOException $e) {
-    $ads = [];
-    $total_ads = $total_users = $pending_ads = $total_responses = 0;
-    $total_pages = 1;
-    error_log($e->getMessage());
-}
+// Объявления
+$sql = "
+SELECT ads.*, users.user_name,
+       COUNT(responses.responses_id) AS response_count
+FROM ads
+JOIN users ON users.user_id = ads.user_id
+LEFT JOIN responses ON responses.ads_id = ads.ads_id
+GROUP BY ads.ads_id
+ORDER BY ads.created_at DESC
+";
+$ads = $pdo->query($sql)->fetchAll();
 ?>
+
 <!DOCTYPE html>
 <html lang="ru">
+
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Админ-панель - Сайт объявлений</title>
+    <title>Админ-панель</title>
     <link rel="stylesheet" href="css/style.css">
-    <link rel="stylesheet" href="css/admin.css">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 </head>
-<body class="admin-page">
-    <!-- Хедер админки -->
-    <header class="admin-header">
-        <div class="container admin-nav">
-            <div class="admin-user-info">
-                <div class="admin-avatar">
-                    <?= strtoupper(substr($_SESSION['user_name'], 0, 1)) ?>
+
+<body>
+    <header class="header">
+        <div class="container">
+            <div class="header-top">
+                <div class="logo">
+                    <img src="images/logoo.svg" alt="Логотип сайта" class="logo-image">
+                    <span class="logo-text">Объявления</span>
                 </div>
-                <span class="admin-name">
-                    Администратор: <?= htmlspecialchars($_SESSION['user_name']) ?>
-                </span>
-            </div>
-            
-            <div class="admin-links">
-                <a href="index.php" class="admin-link">На сайт</a>
-                <a href="admin.php" class="admin-link">Панель управления</a>
-                <a href="logout.php" class="admin-link">Выход</a>
+
+                <div class="auth-buttons">
+                    <?php if ($is_logged_in): ?>
+                        <?php if (($role_id ?? null) === 1): ?>
+                            <!-- Кнопка админ-панели только для администратора -->
+                            <a href="admin.php" class="admin-panel-btn">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2">
+                                    <path
+                                        d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4" />
+                                </svg>
+                                <span>Админ-панель</span>
+                            </a>
+                        <?php endif; ?>
+                        <span class="user-welcome">Здравствуйте, <?= htmlspecialchars($user_name) ?></span>
+                        <a href="logout.php" class="logout-link">Выход</a>
+                    <?php else: ?>
+                        <button class="auth-link" onclick="openModal('register')">Регистрация</button>
+                        <button class="auth-link" onclick="openModal('login')">Вход</button>
+                    <?php endif; ?>
+                </div>
             </div>
         </div>
     </header>
 
-    <main class="admin-main">
-        <div class="admin-container">
-            <h1 class="admin-title">Панель управления</h1>
-            
-            <!-- Статистика -->
-            <div class="admin-stats">
-                <div class="stat-card">
-                    <div class="stat-value"><?= $total_ads ?></div>
-                    <div class="stat-label">Всего объявлений</div>
-                </div>
-                
-                <div class="stat-card">
-                    <div class="stat-value"><?= $pending_ads ?></div>
-                    <div class="stat-label">На модерации</div>
-                </div>
-                
-                <div class="stat-card">
-                    <div class="stat-value"><?= $total_users ?></div>
-                    <div class="stat-label">Пользователей</div>
-                </div>
-                
-                <div class="stat-card">
-                    <div class="stat-value"><?= $total_responses ?></div>
-                    <div class="stat-label">Откликов</div>
-                </div>
+    <main class="container" style="padding: 40px 0;">
+        <h1 class="section-title">Панель управления</h1>
+
+        <!-- Статистика -->
+        <div class="ads-grid">
+            <div class="ad-card">
+                <div class="ad-price"><?= $total_ads ?></div>
+                <div class="ad-title">Всего объявлений</div>
             </div>
-            
-            <!-- Быстрые действия -->
-            <div class="quick-actions">
-                <a href="add.php" class="quick-action-btn">
-                    <span>➕</span>
-                    <span>Добавить объявление</span>
-                </a>
-                <a href="admin_users.php" class="quick-action-btn">
-                    <span>👥</span>
-                    <span>Управление пользователями</span>
-                </a>
-                <a href="admin_settings.php" class="quick-action-btn">
-                    <span>⚙️</span>
-                    <span>Настройки</span>
-                </a>
+            <div class="ad-card">
+                <div class="ad-price"><?= $pending_ads ?></div>
+                <div class="ad-title">На модерации</div>
             </div>
-            
-            <!-- Фильтры и поиск -->
-            <div class="admin-filters">
-                <div class="filter-group">
-                    <span class="filter-label">Статус:</span>
-                    <select class="filter-select" onchange="filterByStatus(this.value)">
-                        <option value="all">Все</option>
-                        <option value="pending">На модерации</option>
-                        <option value="approved">Одобренные</option>
-                    </select>
-                </div>
-                
-                <input type="text" class="search-input" placeholder="Поиск по названию..." id="searchInput">
-                <button class="search-btn" onclick="searchAds()">Поиск</button>
+            <div class="ad-card">
+                <div class="ad-price"><?= $total_users ?></div>
+                <div class="ad-title">Пользователей</div>
             </div>
-            
-            <!-- Таблица объявлений -->
-            <div class="admin-table-container">
-                <?php if (empty($ads)): ?>
-                    <div class="empty-state">
-                        <div class="empty-icon">📭</div>
-                        <h3>Объявлений нет</h3>
-                        <p>Пока нет объявлений для модерации.</p>
-                    </div>
-                <?php else: ?>
-                    <table class="admin-table">
-                        <thead>
-                            <tr>
-                                <th>ID</th>
-                                <th>Заголовок</th>
-                                <th>Автор</th>
-                                <th>Цена</th>
-                                <th>Отклики</th>
-                                <th>Статус</th>
-                                <th>Дата</th>
-                                <th>Действия</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <?php foreach ($ads as $ad): ?>
-                                <tr>
-                                    <td>#<?= $ad['ads_id'] ?></td>
-                                    <td>
-                                        <a href="detail.php?id=<?= $ad['ads_id'] ?>" class="ad-link">
-                                            <?= htmlspecialchars($ad['ads_title']) ?>
-                                        </a>
-                                    </td>
-                                    <td><?= htmlspecialchars($ad['user_name']) ?></td>
-                                    <td><?= number_format($ad['ads_price'], 0, '', ' ') ?> ₽</td>
-                                    <td><?= $ad['response_count'] ?></td>
-                                    <td>
-                                        <span class="status-badge <?= $ad['is_verified'] ? 'status-approved' : 'status-pending' ?>">
-                                            <?= $ad['is_verified'] ? '✅ Одобрено' : '⏳ На модерации' ?>
-                                        </span>
-                                    </td>
-                                    <td><?= date('d.m.Y', strtotime($ad['created_at'])) ?></td>
-                                    <td class="actions-cell">
-                                        <a href="detail.php?id=<?= $ad['ads_id'] ?>" 
-                                           class="action-btn view-btn" 
-                                           title="Просмотр">
-                                            👁️
-                                        </a>
-                                        
-                                        <?php if (!$ad['is_verified']): ?>
-                                            <a href="approve_ad.php?id=<?= $ad['ads_id'] ?>" 
-                                               class="action-btn approve-btn"
-                                               onclick="return confirm('Одобрить объявление?')"
-                                               title="Одобрить">
-                                                ✅
-                                            </a>
-                                        <?php else: ?>
-                                            <a href="disapprove_ad.php?id=<?= $ad['ads_id'] ?>" 
-                                               class="action-btn reject-btn"
-                                               onclick="return confirm('Снять с публикации?')"
-                                               title="Снять">
-                                                ❌
-                                            </a>
-                                        <?php endif; ?>
-                                        
-                                        <a href="edit_ad.php?id=<?= $ad['ads_id'] ?>" 
-                                           class="action-btn edit-btn"
-                                           title="Редактировать">
-                                            ✏️
-                                        </a>
-                                        
-                                        <a href="delete_ad.php?id=<?= $ad['ads_id'] ?>" 
-                                           class="action-btn delete-btn"
-                                           onclick="return confirm('Удалить объявление?')"
-                                           title="Удалить">
-                                            🗑️
-                                        </a>
-                                    </td>
-                                </tr>
-                            <?php endforeach; ?>
-                        </tbody>
-                    </table>
-                <?php endif; ?>
+            <div class="ad-card">
+                <div class="ad-price"><?= $total_responses ?></div>
+                <div class="ad-title">Откликов</div>
             </div>
-            
-            <!-- Пагинация -->
-            <?php if ($total_pages > 1): ?>
-            <div class="admin-pagination">
-                <?php if ($page > 1): ?>
-                    <a href="?page=<?= $page - 1 ?>" class="page-btn">←</a>
-                <?php endif; ?>
-                
-                <?php for ($i = 1; $i <= $total_pages; $i++): ?>
-                    <?php if ($i == 1 || $i == $total_pages || ($i >= $page - 2 && $i <= $page + 2)): ?>
-                        <a href="?page=<?= $i ?>" 
-                           class="page-btn <?= $i == $page ? 'active' : '' ?>">
-                            <?= $i ?>
-                        </a>
-                    <?php elseif ($i == $page - 3 || $i == $page + 3): ?>
-                        <span class="page-btn disabled">...</span>
-                    <?php endif; ?>
-                <?php endfor; ?>
-                
-                <?php if ($page < $total_pages): ?>
-                    <a href="?page=<?= $page + 1 ?>" class="page-btn">→</a>
-                <?php endif; ?>
-            </div>
-            <?php endif; ?>
+        </div>
+
+        <!-- Таблица -->
+        <div class="description-card">
+            <h3 style="margin-bottom: 20px;">Все объявления</h3>
+
+            <table style="width:100%; border-collapse: collapse;">
+                <thead>
+                    <tr style="border-bottom: 2px solid #eee;">
+                        <th>ID</th>
+                        <th>Заголовок</th>
+                        <th>Автор</th>
+                        <th>Цена</th>
+                        <th>Отклики</th>
+                        <th>Статус</th>
+                        <th>Дата</th>
+                        <th>Действия</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php foreach ($ads as $ad): ?>
+                        <tr style="border-bottom: 1px solid #eee;">
+                            <td>#<?= $ad['ads_id'] ?></td>
+                            <td>
+                                <a href="detail.php?id=<?= $ad['ads_id'] ?>">
+                                    <?= htmlspecialchars($ad['ads_title']) ?>
+                                </a>
+                            </td>
+                            <td><?= htmlspecialchars($ad['user_name']) ?></td>
+                            <td><?= number_format($ad['ads_price'], 0, '', ' ') ?> ₽</td>
+                            <td><?= $ad['response_count'] ?></td>
+                            <td>
+                                <?php if ($ad['is_verified']): ?>
+                                    <span class="ad-status approved">Одобрено</span>
+                                <?php else: ?>
+                                    <span class="ad-status pending">На модерации</span>
+                                <?php endif; ?>
+                            </td>
+                            <td><?= date('d.m.Y', strtotime($ad['created_at'])) ?></td>
+                            <td>
+                                <a href="detail.php?id=<?= $ad['ads_id'] ?>">👁</a>
+                                <?php if (!$ad['is_verified']): ?>
+                                    <a href="approve_ad.php?id=<?= $ad['ads_id'] ?>">✔</a>
+                                <?php endif; ?>
+                                <a href="delete_ad.php?id=<?= $ad['ads_id'] ?>" onclick="return confirm('Удалить?')">🗑</a>
+                            </td>
+                        </tr>
+                    <?php endforeach; ?>
+                </tbody>
+            </table>
         </div>
     </main>
 
-    <script>
-        // Фильтрация по статусу
-        function filterByStatus(status) {
-            if (status === 'all') {
-                window.location.href = 'admin.php';
-            } else {
-                window.location.href = `admin.php?status=${status}`;
-            }
-        }
-        
-        // Поиск объявлений
-        function searchAds() {
-            const query = document.getElementById('searchInput').value;
-            if (query.trim()) {
-                window.location.href = `admin.php?search=${encodeURIComponent(query)}`;
-            }
-        }
-        
-        // Быстрая фильтрация по нажатию Enter
-        document.getElementById('searchInput').addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
-                searchAds();
-            }
-        });
-        
-        // Показ уведомлений
-        function showNotification(message, type = 'info') {
-            const notification = document.createElement('div');
-            notification.className = `admin-notification notification-${type}`;
-            notification.innerHTML = message;
-            
-            document.body.appendChild(notification);
-            
-            setTimeout(() => {
-                notification.style.animation = 'slideOut 0.3s ease-out forwards';
-                setTimeout(() => notification.remove(), 300);
-            }, 3000);
-        }
-        
-        // Проверка параметров URL для показа уведомлений
-        const urlParams = new URLSearchParams(window.location.search);
-        if (urlParams.has('approved')) {
-            showNotification('Объявление успешно одобрено!', 'success');
-        }
-        if (urlParams.has('deleted')) {
-            showNotification('Объявление успешно удалено!', 'info');
-        }
-        if (urlParams.has('error')) {
-            showNotification('Произошла ошибка!', 'error');
-        }
-    </script>
+    <footer class="footer">
+        <div class="container footer-inner">
+            <div class="footer-email">info@gmail.com</div>
+            <div class="footer-links">
+                <a href="#">Информация о разработчике</a>
+            </div>
+        </div>
+    </footer>
 </body>
+
 </html>
