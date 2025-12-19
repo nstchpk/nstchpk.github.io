@@ -9,7 +9,7 @@ body {
     font-family: 'Inter', sans-serif;
     line-height: 1.6;
     color: #333;
-    background-color: #f5f5f5;
+    background-color: #FFFFFF;
 }
 
 .container {
@@ -25,15 +25,11 @@ body {
 }
 
 .header-top {
-    width: 1200px;
-    /* как в Figma */
-    height: 75px;
-    /* ТОЧНО */
-    margin: 0 auto;
-    /* центр */
     display: flex;
     align-items: center;
     justify-content: space-between;
+    padding: 20px 0;
+    flex-wrap: wrap;
 }
 
 .logo {
@@ -62,63 +58,114 @@ body {
 }
 
 
+.auth-link {
+    color: #E91E63;
+    text-decoration: none;
+    font-size: 16px;
+    font-weight: 500;
+    padding: 8px 0;
+    background: none;
+    border: none;
+    cursor: pointer;
+    transition: color 0.3s;
+    font-family: 'Inter', sans-serif;
+}
+
+.auth-link:hover {
+    color: #C2185B;
+    text-decoration: underline;
+}
+
+/* Отдельный стиль для ссылки "Регистрация" если нужно */
+.auth-link.register {
+    /* Можно добавить дополнительные стили если нужно */
+}
+
+/* Обновляем контейнер для ссылок */
 .auth-buttons {
     display: flex;
     align-items: center;
-    gap: 15px;
+    gap: 25px; /* Увеличиваем отступ между ссылками */
 }
 
-.auth-btn {
-    background: #E91E63;
-    color: white;
+/* Убираем старые стили кнопок из .auth-btn если они применяются к ссылкам */
+.auth-buttons .auth-btn {
+    /* Удаляем все стили кнопок */
+    background: none;
+    color: #E91E63;
     border: none;
-    padding: 10px 20px;
-    border-radius: 8px;
-    font-size: 14px;
+    padding: 8px 0;
+    border-radius: 0;
+    font-size: 16px;
     font-weight: 500;
     cursor: pointer;
-    transition: all 0.3s;
+    transition: color 0.3s;
     text-decoration: none;
     display: inline-block;
+    box-shadow: none;
 }
 
-.auth-btn:hover {
-    background: #C2185B;
-    transform: translateY(-2px);
+.auth-buttons .auth-btn:hover {
+    background: none;
+    color: #C2185B;
+    transform: none;
+    text-decoration: underline;
+}
+
+/* Если у вас есть разделитель между ссылками */
+.auth-separator {
+    color: #ddd;
+    font-size: 16px;
 }
 
 .user-welcome {
     font-weight: 500;
-    color: #333;
+    color: #181818;
 }
 
-.logout-btn {
-    background: #757575;
+.user-welcome {
+    font-weight: 500;
+    color: #181818;
+    font-size: 16px;
 }
 
-.logout-btn:hover {
-    background: #616161;
+/* Ссылка "Выход" без кнопочного стиля */
+.logout-link {
+    color: #666;
+    text-decoration: none;
+    font-size: 16px;
+    font-weight: 500;
+    transition: color 0.3s;
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    font-family: 'Inter', sans-serif;
+}
+
+.logout-link:hover {
+    color: #E91E63;
 }
 
 /* ===== СЕТКА ОБЪЯВЛЕНИЙ (АДАПТИВНАЯ) ===== */
 .ads-grid {
     display: flex;
     flex-wrap: wrap;
-    gap: 24px;
+    gap: 20px;
     margin: 30px 0;
-    justify-content: center;
+    justify-content: center; /* Центрирует элементы */
 }
 
 .ad-card {
     background: white;
     border-radius: 12px;
     overflow: hidden;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
     transition: transform 0.3s;
-    flex: 0 0 calc(20% - 20px);
-    /* 5 колонок на десктопе */
-    max-width: calc(20% - 20px);
+    
+    flex: 1 1 calc(20% - 20px); /* 5 колонок на десктопе */
     min-width: 200px;
+    max-width: 300px; /* Максимальная ширина карточки */
 }
 
 .ad-card:hover {
@@ -128,14 +175,19 @@ body {
 
 .ad-img {
     width: 100%;
-    height: 180px;
+    height: 0;
+    padding-bottom: 100%; /* КЛЮЧЕВОЕ: создаем квадрат */
+    position: relative;
     overflow: hidden;
 }
 
 .ad-image {
+    position: absolute;
+    top: 0;
+    left: 0;
     width: 100%;
     height: 100%;
-    object-fit: cover;
+    object-fit: cover; /* Заполняем квадрат без искажений */
     transition: transform 0.3s;
 }
 
@@ -167,7 +219,7 @@ body {
 
 .section-title {
     font-size: 40px;
-    font-weight: 600;
+    font-weight: 500;
     color: #111;
     margin: 40px 0 24px;
 }
@@ -231,7 +283,9 @@ body {
 
 /* ===== КНОПКА ПОКАЗАТЬ ЕЩЕ ===== */
 .load-more {
-    text-align: center;
+    width: 100%;
+    display: flex;
+    justify-content: center; /* или flex-start для выравнивания по левому краю сетки */
     margin: 40px 0;
 }
 
@@ -244,10 +298,16 @@ body {
     font-size: 16px;
     font-weight: 500;
     cursor: pointer;
-    display: inline-flex;
+    display: inline-flex; /* ← ИЗМЕНИТЬ НА flex */
     align-items: center;
     gap: 8px;
     transition: all 0.3s;
+
+    flex-direction: row-reverse; 
+    
+    width: 100%; /* Растянуть на всю ширину контейнера */
+    justify-content: center; /* Текст по центру */
+    max-width: 1200px;
 }
 
 .show-more-btn:hover {
@@ -272,9 +332,10 @@ body {
 .modal {
     background: white;
     border-radius: 16px;
-    width: 90%;
-    max-width: 500px;
+    width: 90%; /* Вместо фиксированной ширины */
+    max-width: 500px; /* Но не шире 500px */
     position: relative;
+    margin: 20px; /* Отступы на мобильных */
     animation: modalAppear 0.3s ease;
 }
 
@@ -432,10 +493,10 @@ body {
 .footer-inner {
     max-width: 1200px;
     margin: 0 auto;
-
     display: flex;
     justify-content: space-between;
     align-items: center;
+    flex-wrap: wrap; /* Добавляем перенос на мобильных */
 }
 
 .footer-email {
@@ -472,7 +533,7 @@ body {
 /* ОСНОВНОЙ КОНТЕЙНЕР */
 .add-ad-grid {
     display: flex;
-    /* ← FLEX */
+    flex-wrap: wrap;
     align-items: flex-start;
     gap: 40px;
 }
@@ -516,8 +577,7 @@ body {
 
 /* ===== ПРАВАЯ ЧАСТЬ (ПОЛЯ) ===== */
 .add-ad-fields {
-    flex: 1;
-    /* занимает всё оставшееся место */
+    flex: 2 1 300px;
 }
 
 .add-ad-fields input,
@@ -566,7 +626,8 @@ body {
 }
 
 .photo-upload {
-    width: 200px;
+    flex: 1 1 200px;
+    max-width: 300px;
 }
 
 .photo-placeholder {
@@ -636,23 +697,22 @@ body {
 }
 
 
-/* ===== АДАПТИВ ===== */
-@media (max-width: 768px) {
-    .add-ad-grid {
-        flex-direction: column;
-        align-items: center;
-    }
+/* ===== АДАПТИВНОСТЬ ===== */
 
-    .add-ad-fields {
-        width: 100%;
+@media (max-width: 1200px) {
+    .ad-card {
+        flex: 1 1 calc(25% - 20px); /* 4 колонки */
     }
 }
 
-
-/* ===== АДАПТИВНОСТЬ ===== */
+@media (max-width: 992px) {
+    .ad-card {
+        flex: 1 1 calc(33.333% - 20px); /* 3 колонки */
+    }
+}
 
 /* Планшет (768px - 1023px) */
-@media (max-width: 1023px) {
+@media (max-width: 1024px) {
     .ad-card {
         flex: 0 0 calc(33.333% - 16px);
         /* 3 колонки */
@@ -666,23 +726,24 @@ body {
 }
 
 /* Большие мобильные (576px - 767px) */
-@media (max-width: 767px) {
+@media (max-width: 768px) {
     .ad-card {
-        flex: 0 0 calc(50% - 16px);
-        /* 2 колонки */
-        max-width: calc(50% - 16px);
+        flex: 1 1 calc(50% - 20px); /* 2 колонки */
     }
-
-    .add-text {
-        display: none;
-        /* Скрываем текст, оставляем только + */
+    
+    .ad-img {
+        padding-bottom: 100%; /* Всегда квадрат */
     }
-
+    
     .add-btn {
-        padding: 12px;
-        width: 44px;
-        height: 44px;
+        width: 40px; /* Квадратная кнопка на мобильных */
+        height: 40px;
+        padding: 0;
         justify-content: center;
+    }
+    
+    .add-text {
+        display: none; /* Скрываем текст на мобильных */
     }
 
     .footer-inner {
@@ -690,60 +751,54 @@ body {
         gap: 20px;
         text-align: center;
     }
-}
-
-/* Мобильные (до 575px) */
-@media (max-width: 575px) {
-    .container {
-        padding: 0 15px;
-    }
-
-    .ads-grid {
-        gap: 16px;
-    }
-
-    .ad-card {
-        flex: 0 0 100%;
-        /* 1 колонка */
-        max-width: 100%;
-    }
-
-    .section-header {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 15px;
-    }
-
-    .add-btn {
-        align-self: flex-end;
-    }
-
-    .modal-content {
-        padding: 24px;
-    }
-
-    .form-two-columns {
-        flex-direction: column;
-        gap: 16px;
+    
+    .footer {
+        padding: 30px 0; /* Меньше отступы на мобильных */
     }
 
     .header-top {
         flex-direction: column;
-        gap: 15px;
-        padding: 20px 0;
+        gap: 20px;
+        padding: 15px 0;
     }
-
+    
+    .logo-text {
+        font-size: 18px; /* Чуть меньше на мобильных */
+    }
+    
     .auth-buttons {
         width: 100%;
         justify-content: center;
+        flex-wrap: wrap;
+    }
+
+    .add-ad-grid {
+        flex-direction: column;
+        align-items: center;
+    }
+    
+    .photo-upload,
+    .add-ad-fields {
+        width: 100%;
+        max-width: 100%;
+    }
+    
+    .publish-btn {
+        width: 100%;
     }
 }
+
+
 
 /* Очень маленькие экраны */
 @media (max-width: 320px) {
     .ad-card {
         flex: 0 0 100%;
         max-width: 100%;
+    }
+
+    .ad-img {
+        padding-bottom: 100%; /* Всегда квадрат */
     }
 
     .add-btn {

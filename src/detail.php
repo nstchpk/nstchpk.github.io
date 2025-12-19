@@ -26,7 +26,7 @@ try {
             FROM ads
             LEFT JOIN users ON ads.user_id = users.user_id
             WHERE ads.ads_id = :id";
-    
+
     $stmt = $pdo->prepare($sql);
     $stmt->execute([':id' => $id]);
     $ad = $stmt->fetch();
@@ -83,7 +83,7 @@ try {
                     LEFT JOIN users ON responses.user_id = users.user_id
                     WHERE responses.ads_id = :id
                     ORDER BY responses.created_at DESC";
-    
+
     $responses_stmt = $pdo->prepare($responses_sql);
     $responses_stmt->execute([':id' => $id]);
     $responses = $responses_stmt->fetchAll();
@@ -94,6 +94,7 @@ try {
 ?>
 <!DOCTYPE html>
 <html lang="ru">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -104,6 +105,7 @@ try {
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 </head>
+
 <body class="detail-page">
     <header class="header">
         <div class="container">
@@ -118,10 +120,10 @@ try {
                 <div class="auth-buttons">
                     <?php if ($is_logged_in): ?>
                         <span class="user-welcome">Здравствуйте, <?= htmlspecialchars($user_name) ?></span>
-                        <a href="logout.php" class="auth-btn logout-btn">Выход</a>
+                        <a href="logout.php" class="logout-link">Выход</a>
                     <?php else: ?>
-                        <button class="auth-btn" onclick="openModal('register')">Регистрация</button>
-                        <button class="auth-btn" onclick="openModal('login')">Вход</button>
+                        <button class="auth-link" onclick="openModal('register')">Регистрация</button>
+                        <button class="auth-link" onclick="openModal('login')">Вход</button>
                     <?php endif; ?>
                 </div>
             </div>
@@ -136,8 +138,7 @@ try {
                     <div class="ad-photo-container">
                         <?php if (!empty($ad['ads_photo'])): ?>
                             <img src="images/<?= htmlspecialchars($ad['ads_photo']) ?>"
-                                alt="<?= htmlspecialchars($ad['ads_title']) ?>" 
-                                class="main-ad-photo">
+                                alt="<?= htmlspecialchars($ad['ads_title']) ?>" class="main-ad-photo">
                         <?php else: ?>
                             <div class="no-photo-placeholder">
                                 Нет изображения
@@ -178,13 +179,12 @@ try {
                 <!-- Правая колонка -->
                 <div class="detail-info-column">
                     <div class="detail-top">
-                        <a href="index.php" class="back-link">← Назад к списку</a>
-
                         <?php if ($can_edit): ?>
                             <a href="edit_ad.php?id=<?= $ad['ads_id'] ?>" class="edit-link">
                                 Редактировать
                             </a>
                         <?php endif; ?>
+                        <a href="index.php" class="back-link">← Назад к списку</a>
                     </div>
 
                     <div class="ad-price-detail">
@@ -207,11 +207,9 @@ try {
                     </div>
 
                     <!-- Кнопка отклика -->
-                    <button class="respond-main-btn" 
-                            id="respondButton" 
-                            data-ad-id="<?= $id ?>"
-                            <?= (!$is_logged_in || $has_responded) ? 'disabled' : '' ?>
-                            onclick="handleResponse(<?= $id ?>)">
+                    <button class="respond-main-btn <?= $has_responded ? 'responded' : '' ?>" id="respondButton"
+                        data-ad-id="<?= $id ?>" <?= (!$is_logged_in || $has_responded) ? 'disabled' : '' ?>
+                        onclick="handleResponse(<?= $id ?>)">
                         <?php if ($has_responded): ?>
                             ✓ Вы откликнулись на объявление
                         <?php elseif (!$is_logged_in): ?>
@@ -223,9 +221,10 @@ try {
 
                     <div class="description-card">
                         <h3>Описание</h3>
-                        <p><?= nl2br(htmlspecialchars($ad['ads_description'] ?? '')) ?></p>
+                        <div class="description-text">
+                            <?= nl2br(htmlspecialchars($ad['ads_description'] ?? '')) ?>
+                        </div>
                     </div>
-
                 </div>
             </div>
         </div>
@@ -262,7 +261,8 @@ try {
                         </div>
                         <div class="form-row form-two-columns">
                             <input type="password" placeholder="Пароль" required class="form-input" id="regPassword">
-                            <input type="password" placeholder="Повторите пароль" required class="form-input" id="regConfirmPassword">
+                            <input type="password" placeholder="Повторите пароль" required class="form-input"
+                                id="regConfirmPassword">
                         </div>
 
                         <div class="checkbox-group">
@@ -304,23 +304,44 @@ try {
     </div>
 
     <script>
-        // === ГЛОБАЛЬНЫЕ ФУНКЦИИ (те же что и в index.php) ===
-        
+        // === ОБРАБОТКА ОТКЛИКА ===
+        function handleResponse(adId) {
+            <?php if (!$is_logged_in): ?>
+                alert('Для отклика необходимо войти в систему');
+                openModal('login');
+                return false;
+            <?php else: ?>
+                return performResponse(adId);
+            <?php endif; ?>
+        }
+
+        // js/common.js
         function openModal(tab = 'register') {
             const modal = document.getElementById('authModal');
             if (!modal) return;
-            
+
+            const scrollY = window.scrollY;
+
             modal.style.display = 'flex';
-            document.body.style.overflow = 'hidden';
+            document.body.style.position = 'fixed';
+            document.body.style.top = `-${scrollY}px`;
+            document.body.style.width = '100%';
+
             switchTab(tab);
         }
 
         function closeModal() {
             const modal = document.getElementById('authModal');
             if (!modal) return;
-            
+
             modal.style.display = 'none';
-            document.body.style.overflow = '';
+            document.body.style.position = '';
+            document.body.style.top = '';
+            document.body.style.width = '';
+
+            if (scrollY) {
+                window.scrollTo(0, parseInt(scrollY || '0') * -1);
+            }
         }
 
         function switchTab(tab) {
@@ -344,144 +365,18 @@ try {
             }
         }
 
-        // === ОБРАБОТКА РЕГИСТРАЦИИ ===
-        function handleRegister(event) {
-            event.preventDefault();
-
-            const name = document.getElementById('regName')?.value.trim();
-            const email = document.getElementById('regEmail')?.value.trim();
-            const phone = document.getElementById('regPhone')?.value.trim();
-            const password = document.getElementById('regPassword')?.value;
-            const confirmPassword = document.getElementById('regConfirmPassword')?.value;
-            const agree = document.getElementById('agree')?.checked;
-
-            // Валидация на клиенте
-            if (!name || !email || !phone || !password || !confirmPassword) {
-                alert('Все поля обязательны для заполнения');
-                return;
-            }
-
-            if (password !== confirmPassword) {
-                alert('Пароли не совпадают');
-                return;
-            }
-
-            if (password.length < 6) {
-                alert('Пароль должен быть не менее 6 символов');
-                return;
-            }
-
-            if (!agree) {
-                alert('Необходимо согласие на обработку персональных данных');
-                return;
-            }
-
-            // Отправка данных на сервер
-            const formData = new FormData();
-            formData.append('name', name);
-            formData.append('email', email);
-            formData.append('phone', phone);
-            formData.append('password', password);
-            formData.append('confirm_password', confirmPassword);
-
-            fetch('/register.php', {
-                method: 'POST',
-                body: formData
-            })
-            .then(response => response.json())
-            .then(data => {
-                console.log('Ответ регистрации:', data);
-                
-                if (data.success) {
-                    alert('Регистрация успешна!');
-                    closeModal();
-                    location.reload(); // Перезагружаем страницу
-                } else {
-                    if (data.errors) {
-                        let errorMessage = 'Ошибки:\n';
-                        for (let field in data.errors) {
-                            errorMessage += `• ${data.errors[field]}\n`;
-                        }
-                        alert(errorMessage);
-                    } else {
-                        alert(data.message || 'Ошибка регистрации');
-                    }
-                }
-            })
-            .catch(error => {
-                console.error('Ошибка регистрации:', error);
-                alert('Произошла ошибка при регистрации');
-            });
-        }
-
-        // === ОБРАБОТКА АВТОРИЗАЦИИ ===
-        function handleLogin(event) {
-            event.preventDefault();
-
-            const email = document.getElementById('loginEmail')?.value.trim();
-            const password = document.getElementById('loginPassword')?.value;
-
-            if (!email || !password) {
-                alert('Все поля обязательны для заполнения');
-                return;
-            }
-
-            const formData = new FormData();
-            formData.append('email', email);
-            formData.append('password', password);
-
-            fetch('/auth.php', {
-                method: 'POST',
-                body: formData
-            })
-            .then(response => response.json())
-            .then(data => {
-                console.log('Ответ авторизации:', data);
-                
-                if (data.success) {
-                    alert('Вход выполнен успешно!');
-                    closeModal();
-                    location.reload(); // Перезагружаем страницу
-                } else {
-                    if (data.errors) {
-                        let errorMessage = 'Ошибки:\n';
-                        for (let field in data.errors) {
-                            errorMessage += `• ${data.errors[field]}\n`;
-                        }
-                        alert(errorMessage);
-                    } else {
-                        alert(data.message || 'Ошибка авторизации');
-                    }
-                }
-            })
-            .catch(error => {
-                console.error('Ошибка авторизации:', error);
-                alert('Произошла ошибка при входе');
-            });
-        }
-
-        // === ОБРАБОТКА ОТКЛИКА ===
-        function handleResponse(adId) {
-            // Динамическая проверка авторизации через PHP сессию
-            // Если пользователь авторизовался через модальное окно, нужно обновить страницу
-            <?php if (!$is_logged_in): ?>
-                // Пользователь не авторизован при загрузке страницы
-                alert('Для отклика необходимо войти в систему');
-                openModal('login');
-                return;
-            <?php else: ?>
-                // Пользователь авторизован - выполняем отклик
-                performResponse(adId);
-            <?php endif; ?>
-        }
-
-        // Новая функция для выполнения отклика
         function performResponse(adId) {
-            if (!confirm('Вы уверены, что хотите откликнуться на это объявление?')) {
-                return;
+            const button = document.getElementById('respondButton');
+
+            // Если уже откликался, ничего не делаем
+            if (button.classList.contains('responded')) {
+                return false;
             }
 
-            const button = document.getElementById('respondButton');
+            if (!confirm('Вы уверены, что хотите откликнуться на это объявление?')) {
+                return false;
+            }
+
             button.disabled = true;
             button.innerHTML = 'Отправка...';
 
@@ -491,36 +386,181 @@ try {
 
             fetch('/respond.php', {
                 method: 'POST',
-                body: formData
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    button.classList.add('responded');
-                    button.innerHTML = '✓ Вы откликнулись на объявление';
-                    alert('Вы успешно откликнулись на объявление!');
-                    
-                    // Обновляем страницу
-                    location.reload();
-                } else {
-                    button.disabled = false;
-                    button.innerHTML = 'Откликнуться на объявление';
-                    
-                    if (data.message === 'Требуется авторизация') {
-                        alert('Сессия истекла. Пожалуйста, войдите снова.');
-                        openModal('login');
-                    } else {
-                        alert(data.message || 'Ошибка при отклике');
-                    }
+                body: formData,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
                 }
             })
-            .catch(error => {
-                console.error('Ошибка:', error);
-                button.disabled = false;
-                button.innerHTML = 'Откликнуться на объявление';
-                alert('Произошла ошибка');
-            });
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.success) {
+                        // Обновляем кнопку
+                        button.classList.add('responded');
+                        button.innerHTML = '✓ Вы откликнулись на объявление';
+                        button.disabled = true;
+
+                        // Обновляем блок с откликнувшимися без перезагрузки страницы
+                        updateResponsesList(adId);
+
+                        // Показываем уведомление
+                        showNotification('Вы успешно откликнулись на объявление!', 'success');
+                    } else {
+                        button.disabled = false;
+                        button.innerHTML = 'Откликнуться на объявление';
+
+                        if (data.message === 'Требуется авторизация') {
+                            alert('Сессия истекла. Пожалуйста, войдите снова.');
+                            openModal('login');
+                        } else {
+                            showNotification(data.message || 'Ошибка при отклике', 'error');
+                        }
+                    }
+                })
+                .catch(error => {
+                    console.error('Ошибка:', error);
+                    button.disabled = false;
+                    button.innerHTML = 'Откликнуться на объявление';
+                    showNotification('Произошла ошибка при отправке', 'error');
+                });
+
+            return false;
         }
+
+        // Функция для обновления списка откликов без перезагрузки страницы
+        function updateResponsesList(adId) {
+            fetch(`/get_responses.php?ad_id=${adId}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success && data.responses) {
+                        const responsesList = document.querySelector('.responses-list');
+                        const responsesCount = document.querySelector('.responses-count');
+                        const noResponses = document.querySelector('.no-responses');
+
+                        // Обновляем счетчик
+                        if (responsesCount) {
+                            responsesCount.textContent = data.responses.length;
+                        }
+
+                        // Убираем сообщение "нет откликов"
+                        if (noResponses) {
+                            noResponses.style.display = 'none';
+                        }
+
+                        // Если список не существует, создаем его
+                        if (!responsesList && data.responses.length > 0) {
+                            const responsesLeftBlock = document.querySelector('.responses-left-block');
+                            const responsesHeader = document.querySelector('.responses-header');
+
+                            const newList = document.createElement('div');
+                            newList.className = 'responses-list';
+
+                            data.responses.forEach(response => {
+                                const personDiv = document.createElement('div');
+                                personDiv.className = 'response-person';
+                                personDiv.innerHTML = `
+                    <div class="response-person-name">${response.user_name}</div>
+                    <div class="response-person-phone">${response.user_phone}</div>
+                `;
+                                newList.appendChild(personDiv);
+                            });
+
+                            responsesHeader.insertAdjacentElement('afterend', newList);
+                        } else if (responsesList) {
+                            // Очищаем и обновляем существующий список
+                            responsesList.innerHTML = '';
+
+                            data.responses.forEach(response => {
+                                const personDiv = document.createElement('div');
+                                personDiv.className = 'response-person';
+                                personDiv.innerHTML = `
+                    <div class="response-person-name">${response.user_name}</div>
+                    <div class="response-person-phone">${response.user_phone}</div>
+                `;
+                                responsesList.appendChild(personDiv);
+                            });
+                        }
+                    }
+                })
+                .catch(error => {
+                    console.error('Ошибка обновления списка откликов:', error);
+                });
+        }
+
+        // Функция для показа уведомлений
+        function showNotification(message, type = 'info') {
+            // Удаляем старые уведомления
+            const oldNotification = document.querySelector('.notification');
+            if (oldNotification) {
+                oldNotification.remove();
+            }
+
+            const notification = document.createElement('div');
+            notification.className = `notification notification-${type}`;
+            notification.innerHTML = message;
+
+            // Стили для уведомления
+            notification.style.cssText = `
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    padding: 15px 25px;
+    border-radius: 8px;
+    color: white;
+    font-weight: 500;
+    z-index: 10000;
+    animation: slideIn 0.3s ease-out;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+`;
+
+            if (type === 'success') {
+                notification.style.background = '#4CAF50';
+            } else if (type === 'error') {
+                notification.style.background = '#f44336';
+            } else {
+                notification.style.background = '#2196F3';
+            }
+
+            document.body.appendChild(notification);
+
+            // Автоматическое скрытие через 3 секунды
+            setTimeout(() => {
+                notification.style.animation = 'slideOut 0.3s ease-out forwards';
+                setTimeout(() => notification.remove(), 300);
+            }, 3000);
+        }
+
+        // Анимации для уведомлений
+        const style = document.createElement('style');
+        style.textContent = `
+@keyframes slideIn {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+@keyframes slideOut {
+    from {
+        transform: translateX(0);
+        opacity: 1;
+    }
+    to {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+}
+`;
+        document.head.appendChild(style);
     </script>
 </body>
+
 </html>

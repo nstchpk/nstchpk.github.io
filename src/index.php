@@ -65,14 +65,10 @@ try {
                 <div class="auth-buttons">
                     <?php if ($is_logged_in): ?>
                         <span class="user-welcome">Здравствуйте, <?= htmlspecialchars($user_name) ?></span>
-                        <a href="logout.php" class="auth-btn logout-btn">Выход</a>
-                        <?php if (($role_id ?? null) === 1): ?>
-                            <a href="admin.php" class="auth-btn">Админ-панель</a>
-                        <?php endif; ?>
-
+                        <a href="logout.php" class="logout-link">Выход</a>
                     <?php else: ?>
-                        <button class="auth-btn" data-tab="register">Регистрация</button>
-                        <button class="auth-btn" data-tab="login">Вход</button>
+                        <button class="auth-link" onclick="openModal('register')">Регистрация</button>
+                        <button class="auth-link" onclick="openModal('login')">Вход</button>
                     <?php endif; ?>
                 </div>
             </div>
@@ -211,8 +207,13 @@ try {
             const modal = document.getElementById('authModal');
             if (!modal) return;
 
+            const scrollY = window.scrollY;
+
             modal.style.display = 'flex';
-            document.body.style.overflow = 'hidden';
+            document.body.style.position = 'fixed';
+            document.body.style.top = `-${scrollY}px`; // Фиксируем позицию
+            document.body.style.width = '100%';
+
             switchTab(tab);
         }
 
@@ -221,7 +222,14 @@ try {
             if (!modal) return;
 
             modal.style.display = 'none';
-            document.body.style.overflow = '';
+            document.body.style.position = '';
+            document.body.style.top = '';
+            document.body.style.width = '';
+
+            // ВОССТАНАВЛИВАЕМ SCROLL
+            if (scrollY) {
+                window.scrollTo(0, parseInt(scrollY || '0') * -1);
+            }
         }
 
         function switchTab(tab) {
